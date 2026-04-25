@@ -1,0 +1,28 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*.pyc
+
+# Virtual environments
+venv_web/
+.venv/
+
+# Runtime data
+sessions/
+results/
+output/
+uploads/
+
+# macOS
+.DS_Store
+
+# Model weights (downloaded at runtime)
+*.onnx
+*.pt
+*.weights
+*.engine
+*.mlmodel
+
+# IDE
+.vscode/
+.idea/

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>JZ-AnyLabeling</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>JZ-AnyLabeling</h1>
+        </header>
+
+        <main>
+            <!-- Left Panel: Upload & Settings -->
+            <div class="left-panel">
+                <!-- Upload Section -->
+                <section class="panel" id="upload-panel">
+                    <div class="upload-header">
+                        <h2>上传文件</h2>
+                        <span class="file-count" id="file-count">0 个文件</span>
+                    </div>
+                    <div class="upload-area-compact">
+                        <input type="file" id="file-input" multiple accept="image/*,video/*" hidden>
+                        <button class="btn btn-primary btn-upload" id="select-files-btn">
+                            📁 选择文件
+                        </button>
+                        <span class="upload-hint">支持图片和视频</span>
+                    </div>
+                    <div class="video-settings" id="video-settings">
+                        <label>
+                            <span>视频帧间隔:</span>
+                            <input type="number" id="frame-interval" value="30" min="1" max="1000">
+                            <span class="setting-hint">每多少帧取1帧 (帧率=fps/间隔)</span>
+                        </label>
+                    </div>
+                </section>
+
+                <!-- Model Selection -->
+                <section class="panel" id="model-panel">
+                    <h2>选择模型</h2>
+                    <div class="model-filters">
+                        <button class="filter-btn active" data-filter="all">全部</button>
+                        <button class="filter-btn" data-filter="detection">检测</button>
+                        <button class="filter-btn" data-filter="segmentation">分割</button>
+                        <button class="filter-btn" data-filter="pose">姿态</button>
+                        <button class="filter-btn" data-filter="ocr">OCR</button>
+                        <button class="filter-btn" data-filter="classification">分类</button>
+                        <button class="filter-btn" data-filter="grounding">Grounding</button>
+                    </div>
+                    <div class="model-grid" id="model-grid">
+                        <div class="loading">加载中...</div>
+                    </div>
+                </section>
+
+                <!-- Format Selection -->
+                <section class="panel" id="format-panel">
+                    <h2>输出格式</h2>
+                    <div class="format-grid" id="format-grid"></div>
+                </section>
+
+                <!-- Labeling Mode Selection -->
+                <section class="panel" id="labeling-mode-panel">
+                    <h2>标注模式</h2>
+                    <div class="labeling-mode-options">
+                        <label class="radio-card">
+                            <input type="radio" name="labeling_mode" value="auto" checked>
+                            <div class="radio-content">
+                                <span class="radio-title">自动识别</span>
+                                <span class="radio-desc">自动识别所有检测到的类别</span>
+                            </div>
+                        </label>
+                        <label class="radio-card">
+                            <input type="radio" name="labeling_mode" value="configured">
+                            <div class="radio-content">
+                                <span class="radio-title">配置类别</span>
+                                <span class="radio-desc">只标注指定的类别</span>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="specific-classes-input hidden" id="specific-classes-container">
+                        <label for="specific-classes">类别名称 (逗号分隔):</label>
+                        <input type="text" id="specific-classes" placeholder="如: person, car, truck">
+                        <span class="setting-hint">只标注这些类别，其他类别会被忽略</span>
+                    </div>
+                </section>
+
+                <!-- Save Path -->
+                <section class="panel" id="save-panel">
+                    <h2>保存路径</h2>
+                    <div class="save-path-input">
+                        <button type="button" class="btn btn-secondary" id="select-folder-btn">
+                            📁 选择文件夹
+                        </button>
+                        <input type="file" id="folder-input" webkitdirectory hidden>
+                        <span id="save-path-display">默认保存到 results 目录</span>
+                    </div>
+                </section>
+
+                <!-- Process Button -->
+                <section class="panel" id="process-panel">
+                    <button class="btn btn-large btn-primary" id="process-btn" disabled>
+                        开始处理
+                    </button>
+                </section>
+            </div>
+
+            <!-- Right Panel: Preview -->
+            <div class="right-panel">
+                <section class="panel preview-panel" id="preview-panel">
+                    <h2>预览</h2>
+                    <div class="preview-container" id="preview-container">
+                        <div class="preview-placeholder" id="preview-placeholder">
+                            <span>👆 请上传文件</span>
+                        </div>
+                        <div class="preview-content hidden" id="preview-content">
+                            <div class="file-list-compact" id="file-list"></div>
+                            <div class="preview-main" id="preview-main">
+                                <img id="preview-image" src="" alt="Preview" class="hidden">
+                                <video id="preview-video" controls class="hidden"></video>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="preview-info" id="preview-info"></div>
+                </section>
+
+                <!-- Progress -->
+                <section class="panel hidden" id="progress-panel">
+                    <h2>处理进度</h2>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <div class="progress-text" id="progress-text">0%</div>
+                    <div class="current-file" id="current-file"></div>
+                </section>
+
+                <!-- Result -->
+                <section class="panel hidden" id="result-panel">
+                    <h2>处理完成</h2>
+                    <p id="result-message">标注已完成！</p>
+                    <p class="result-path" id="result-path"></p>
+                    <button class="btn btn-secondary" id="reset-btn">重新开始</button>
+                </section>
+            </div>
+        </main>
+
+        <footer>
+            <p>JZ-AnyLabeling</p>
+        </footer>
+    </div>
+
+    <script src="/static/js/api-client.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
