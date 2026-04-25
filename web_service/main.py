@@ -71,6 +71,29 @@ async def health_check():
     return {"status": "ok", "service": "JZ-AnyLabeling"}
 
 
+# Get default result directory
+@app.get("/api/config/result_dir")
+async def get_result_dir():
+    return {"result_dir": str(RESULT_DIR)}
+
+
+# Get latest result directory (with most recent job)
+@app.get("/api/config/latest_result_dir")
+async def get_latest_result_dir():
+    """Get the most recent result directory with actual images"""
+    if not RESULT_DIR.exists():
+        return {"result_dir": str(RESULT_DIR), "latest_subdir": None}
+
+    # Find most recently modified subdirectory
+    subdirs = [d for d in RESULT_DIR.iterdir() if d.is_dir()]
+    if not subdirs:
+        return {"result_dir": str(RESULT_DIR), "latest_subdir": None}
+
+    # Sort by modification time, newest first
+    latest = max(subdirs, key=lambda d: d.stat().st_mtime)
+    return {"result_dir": str(RESULT_DIR), "latest_subdir": str(latest)}
+
+
 # Diagnostic endpoint
 @app.get("/api/diag")
 async def diagnostic():
@@ -102,12 +125,13 @@ async def root():
 
 
 # Import and include API routes
-from web_service.api.routes import upload, process, models, formats
+from web_service.api.routes import upload, process, models, formats, preview
 
 app.include_router(upload.router, prefix="/api", tags=["upload"])
 app.include_router(process.router, prefix="/api", tags=["process"])
 app.include_router(models.router, prefix="/api", tags=["models"])
 app.include_router(formats.router, prefix="/api", tags=["formats"])
+app.include_router(preview.router, prefix="/api", tags=["preview"])
 
 
 if __name__ == "__main__":

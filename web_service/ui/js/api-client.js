@@ -123,6 +123,30 @@ class APIClient {
     getDownloadUrl(jobId) {
         return `${this.baseUrl}/api/download/${jobId}`;
     }
+
+    // Annotation Preview
+    async listPreviewFolder(folderPath) {
+        const encodedPath = encodeURIComponent(folderPath);
+        return this.request(`/api/preview/list?folder_path=${encodedPath}`);
+    }
+
+    async getPreviewImage(imagePath, includeAnnotations = true) {
+        const encodedPath = encodeURIComponent(imagePath);
+        return this.request(`/api/preview/image?image_path=${encodedPath}&include_annotations=${includeAnnotations}`);
+    }
+
+    async getFolderAnnotations(folderPath) {
+        const encodedPath = encodeURIComponent(folderPath);
+        return this.request(`/api/preview/folder?folder_path=${encodedPath}`);
+    }
+
+    async getResultDir() {
+        return this.request('/api/config/result_dir');
+    }
+
+    async getLatestResultDir() {
+        return this.request('/api/config/latest_result_dir');
+    }
 }
 
 // Export for use in app.js

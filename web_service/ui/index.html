@@ -111,7 +111,20 @@
 
             <!-- Right Panel: Preview -->
             <div class="right-panel">
-                <section class="panel preview-panel" id="preview-panel">
+                <!-- Mode Toggle -->
+                <section class="panel" id="mode-toggle-panel">
+                    <div class="preview-mode-toggle">
+                        <button class="mode-btn active" id="labeling-mode-btn" data-mode="labeling">
+                            📝 标注模式
+                        </button>
+                        <button class="mode-btn" id="preview-mode-btn" data-mode="preview">
+                            👁 预览模式
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Labeling Panel (default) -->
+                <section class="panel preview-panel" id="labeling-panel">
                     <h2>预览</h2>
                     <div class="preview-container" id="preview-container">
                         <div class="preview-placeholder" id="preview-placeholder">
@@ -126,6 +139,41 @@
                         </div>
                     </div>
                     <div class="preview-info" id="preview-info"></div>
+                </section>
+
+                <!-- Annotation Preview Panel (for preview mode) -->
+                <section class="panel hidden" id="annotation-preview-panel">
+                    <h2>标注预览</h2>
+                    <div class="folder-select-area">
+                        <button class="btn btn-secondary" id="select-folder-preview-btn">
+                            📁 选择文件夹
+                        </button>
+                        <div class="folder-path" id="preview-folder-path">加载中...</div>
+                    </div>
+                    <div class="preview-canvas-container" id="annotation-canvas-container">
+                        <div class="preview-placeholder" id="annotation-preview-placeholder">
+                            <span>👆 请先选择文件夹或点击"默认路径"</span>
+                        </div>
+                        <div class="hidden" id="annotation-preview-content">
+                            <img id="annotation-preview-image" src="" alt="Annotation Preview">
+                        </div>
+                        <svg class="annotation-overlay" id="annotation-overlay"></svg>
+                    </div>
+                    <div class="annotation-controls hidden" id="annotation-controls">
+                        <div class="annotation-nav">
+                            <button class="btn" id="annotation-prev-btn">◀ 上一张</button>
+                            <span id="annotation-page-info">1 / 10</span>
+                            <button class="btn" id="annotation-next-btn">下一张 ▶</button>
+                        </div>
+                        <div class="annotation-info">
+                            <span class="shape-count" id="shape-count">0 个标注</span>
+                        </div>
+                    </div>
+                    <div class="shape-list hidden" id="shape-list"></div>
+                    <div class="annotation-summary hidden" id="annotation-summary">
+                        <div class="summary-title">标注统计</div>
+                        <div class="label-distribution" id="label-distribution"></div>
+                    </div>
                 </section>
 
                 <!-- Progress -->

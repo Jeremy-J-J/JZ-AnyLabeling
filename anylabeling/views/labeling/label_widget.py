@@ -66,6 +66,7 @@ from .utils.file_search import (
 from .utils.qt import new_icon_path
 from .widgets import (
     AboutDialog,
+    AnnotationPreviewDialog,
     AutoLabelingWidget,
     BrightnessContrastDialog,
     Canvas,
@@ -1023,6 +1024,12 @@ class LabelingWidget(LabelDialog):
             icon="paddlepaddle",
             tip=self.tr("Open PaddleOCR dialog"),
         )
+        open_annotation_preview = action(
+            self.tr("Annotation Preview"),
+            self.open_annotation_preview,
+            icon="eye",
+            tip=self.tr("Open annotation preview dialog"),
+        )
         documentation = action(
             self.tr("Documentation"),
             self.documentation,
@@ -1974,6 +1981,12 @@ class LabelingWidget(LabelDialog):
                 shape_manager,
                 None,
                 shape_converter,
+                None,
+                open_chatbot,
+                open_vqa,
+                open_classifier,
+                open_paddleocr,
+                open_annotation_preview,
             ),
         )
         utils.add_actions(
@@ -3165,6 +3178,18 @@ class LabelingWidget(LabelDialog):
             self.ppocr_window.activateWindow()
         else:
             self.ppocr_window.show()
+
+    def open_annotation_preview(self):
+        if not hasattr(self, "annotation_preview_window") or self.annotation_preview_window is None:
+            self.annotation_preview_window = AnnotationPreviewDialog(self)
+            self.annotation_preview_window.setAttribute(
+                Qt.WidgetAttribute.WA_DeleteOnClose, False
+            )
+        if self.annotation_preview_window.isVisible():
+            self.annotation_preview_window.raise_()
+            self.annotation_preview_window.activateWindow()
+        else:
+            self.annotation_preview_window.show()
 
     def open_classifier(self):
         if not self.image_list:

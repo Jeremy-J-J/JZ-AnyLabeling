@@ -44,14 +44,38 @@ class App {
         this.currentPreviewIndex = -1;
         this.customSavePath = null;
 
+        // Annotation preview mode
+        this.previewMode = 'labeling'; // 'labeling' or 'preview'
+        this.previewFolder = null;
+        this.previewFolderHandle = null;
+        this.previewImages = [];
+        this.previewCurrentIndex = 0;
+        this.previewAnnotations = [];
+        this.defaultResultPath = null;
+
         this.init();
     }
 
     async init() {
         await this.loadModels();
         await this.loadFormats();
+        await this.loadConfig();
         this.setupEventListeners();
         this.checkHealth();
+    }
+
+    async loadConfig() {
+        try {
+            console.log('Loading config...');
+            const response = await this.api.getLatestResultDir();
+            console.log('Config response:', response);
+            // Use latest_subdir if available, otherwise fall back to result_dir
+            this.defaultResultPath = response.latest_subdir || response.result_dir;
+            document.getElementById('preview-folder-path').textContent = this.defaultResultPath || '未设置默认路径';
+        } catch (e) {
+            console.error('Failed to load config:', e);
+            document.getElementById('preview-folder-path').textContent = '加载失败';
+        }
     }
 
     async checkHealth() {
@@ -317,6 +341,447 @@ class App {
         document.getElementById('reset-btn').addEventListener('click', () => {
             this.reset();
         });
+
+        // Preview mode toggle
+        document.getElementById('labeling-mode-btn').addEventListener('click', () => {
+            this.setPreviewMode('labeling');
+        });
+
+        document.getElementById('preview-mode-btn').addEventListener('click', () => {
+            this.setPreviewMode('preview');
+        });
+
+        // Annotation preview folder selection
+        document.getElementById('select-folder-preview-btn').addEventListener('click', async () => {
+            if ('showDirectoryPicker' in window) {
+                try {
+                    const dirHandle = await window.showDirectoryPicker();
+                    await this.loadAnnotationFolder(dirHandle);
+                } catch (e) {
+                    if (e.name !== 'AbortError') {
+                        console.error('Directory picker error:', e);
+                    }
+                }
+            } else {
+                // Fallback: use file input
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.webkitdirectory = true;
+                input.addEventListener('change', async (e) => {
+                    const files = Array.from(e.target.files);
+                    if (files.length > 0) {
+                        // Get folder path from first file
+                        const folderPath = files[0].webkitRelativePath.split('/')[0];
+                        await this.loadAnnotationFolderFromPath(folderPath);
+                    }
+                });
+                input.click();
+            }
+        });
+
+        // Annotation navigation
+        document.getElementById('annotation-prev-btn').addEventListener('click', () => {
+            this.showAnnotationImage(this.previewCurrentIndex - 1);
+        });
+
+        document.getElementById('annotation-next-btn').addEventListener('click', () => {
+            this.showAnnotationImage(this.previewCurrentIndex + 1);
+        });
+    }
+
+    // Set preview mode
+    setPreviewMode(mode) {
+        this.previewMode = mode;
+
+        document.getElementById('labeling-mode-btn').classList.toggle('active', mode === 'labeling');
+        document.getElementById('preview-mode-btn').classList.toggle('active', mode === 'preview');
+
+        document.getElementById('labeling-panel').classList.toggle('hidden', mode !== 'labeling');
+        document.getElementById('annotation-preview-panel').classList.toggle('hidden', mode !== 'preview');
+
+        // When entering preview mode, auto-load from default path
+        if (mode === 'preview' && this.defaultResultPath) {
+            // Check if we have images loaded, if not auto-load from default
+            if (this.previewImages.length === 0) {
+                this.loadAnnotationFolderFromPath(this.defaultResultPath);
+            }
+        }
+    }
+
+    // Load annotation folder using File System Access API
+    async loadAnnotationFolder(dirHandle) {
+        this.previewFolder = dirHandle;
+        this.previewFolderHandle = dirHandle;
+        document.getElementById('preview-folder-path').textContent = dirHandle.name;
+
+        try {
+            const images = [];
+            for await (const entry of dirHandle.values()) {
+                if (entry.kind === 'file') {
+                    const ext = entry.name.toLowerCase().split('.').pop();
+                    if (['jpg', 'jpeg', 'png', 'bmp', 'gif', 'tiff', 'webp'].includes(ext)) {
+                        // Store object with name and fileHandle
+                        images.push({
+                            name: entry.name,
+                            fileHandle: entry
+                        });
+                    }
+                }
+            }
+
+            if (images.length === 0) {
+                alert('未找到图片文件');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('annotation-preview-placeholder').classList.add('hidden');
+            document.getElementById('annotation-preview-content').classList.remove('hidden');
+            document.getElementById('annotation-controls').classList.remove('hidden');
+            document.getElementById('shape-list').classList.remove('hidden');
+
+            this.previewImages = images;
+            this.previewCurrentIndex = 0;
+            this.previewAnnotations = [];
+            await this.showAnnotationImage(0);
+            this.updateAnnotationSummary();
+
+        } catch (e) {
+            console.error('Error loading folder:', e);
+            alert('加载文件夹失败');
+        }
+    }
+
+    // Load annotation folder from path (for fallback using backend API)
+    async loadAnnotationFolderFromPath(folderPath) {
+        try {
+            const response = await this.api.listPreviewFolder(folderPath);
+            if (response.images_count === 0) {
+                alert('未找到图片文件');
+                return;
+            }
+
+            document.getElementById('preview-folder-path').textContent = folderPath;
+            document.getElementById('annotation-preview-placeholder').classList.add('hidden');
+            document.getElementById('annotation-preview-content').classList.remove('hidden');
+            document.getElementById('annotation-controls').classList.remove('hidden');
+            document.getElementById('shape-list').classList.remove('hidden');
+
+            this.previewImages = response.images;
+            this.previewCurrentIndex = 0;
+            this.previewAnnotations = [];
+            await this.showAnnotationImage(0);
+            this.updateAnnotationSummary();
+
+        } catch (e) {
+            console.error('Error loading folder:', e);
+            alert('加载文件夹失败: ' + e.message);
+        }
+    }
+
+    // Show annotation image
+    async showAnnotationImage(index) {
+        if (index < 0 || index >= this.previewImages.length) return;
+
+        this.previewCurrentIndex = index;
+        const imageData = this.previewImages[index];
+
+        // Check if using file handles (File System Access API) or paths
+        if (imageData.fileHandle) {
+            // Using File System Access API - load image directly
+            try {
+                const file = await imageData.fileHandle.getFile();
+                const imageUrl = URL.createObjectURL(file);
+
+                const img = document.getElementById('annotation-preview-image');
+                img.src = imageUrl;
+                img.classList.remove('hidden');
+
+                // Try to load annotations from JSON sidecar file
+                const labelName = imageData.name.replace(/\.[^.]+$/, '.json');
+                let annotations = { features: [] };
+                let shapes = [];
+
+                // Look for label file in the same folder
+                if (this.previewFolderHandle) {
+                    for await (const entry of this.previewFolderHandle.values()) {
+                        if (entry.kind === 'file' && entry.name === labelName) {
+                            const labelFile = await entry.getFile();
+                            const labelText = await labelFile.text();
+                            const labelData = JSON.parse(labelText);
+                            shapes = labelData.shapes || [];
+
+                            // Get image dimensions
+                            const width = labelData.imageWidth || 1920;
+                            const height = labelData.imageHeight || 1080;
+
+                            // Convert to GeoJSON
+                            annotations = this.shapesToGeoJSON(shapes, width, height);
+                            break;
+                        }
+                    }
+                }
+
+                // Draw annotations after a brief delay to ensure image is ready
+                setTimeout(() => {
+                    this.drawAnnotations(annotations);
+                }, 50);
+
+                this.previewAnnotations = shapes;
+                this.renderShapeList(shapes);
+
+                // Update navigation
+                document.getElementById('annotation-page-info').textContent =
+                    `${index + 1} / ${this.previewImages.length}`;
+                document.getElementById('annotation-prev-btn').disabled = index === 0;
+                document.getElementById('annotation-next-btn').disabled = index === this.previewImages.length - 1;
+                document.getElementById('shape-count').textContent = `${shapes.length} 个标注`;
+
+            } catch (e) {
+                console.error('Error loading image from file handle:', e);
+                alert('加载图片失败');
+            }
+        } else {
+            // Using path-based approach (backend API)
+            try {
+                const response = await this.api.getPreviewImage(imageData.path, true);
+
+                // Show image
+                const img = document.getElementById('annotation-preview-image');
+                img.src = response.data;
+                img.classList.remove('hidden');
+
+                // Draw annotations after a brief delay to ensure image dimensions are loaded
+                setTimeout(() => {
+                    this.drawAnnotations(response.annotations);
+                }, 50);
+
+                this.previewAnnotations = response.shapes || [];
+
+                // Update navigation
+                document.getElementById('annotation-page-info').textContent =
+                    `${index + 1} / ${this.previewImages.length}`;
+                document.getElementById('annotation-prev-btn').disabled = index === 0;
+                document.getElementById('annotation-next-btn').disabled = index === this.previewImages.length - 1;
+
+                // Update shape list
+                this.renderShapeList(response.shapes || []);
+                document.getElementById('shape-count').textContent = `${response.shapes?.length || 0} 个标注`;
+
+            } catch (e) {
+                console.error('Error loading image:', e);
+                alert('加载图片失败: ' + e.message);
+            }
+        }
+    }
+
+    // Convert shapes to GeoJSON (client-side version)
+    shapesToGeoJSON(shapes, width, height) {
+        const features = [];
+        shapes.forEach((shape, i) => {
+            const label = shape.label || 'unknown';
+            const shapeType = shape.shape_type || 'rectangle';
+            let points = shape.points || [];
+
+            if (!points || points.length < 3) return;
+
+            // Handle both [{"x":..., "y":...}] and [[x,y]] formats
+            const coords = points.map(p => {
+                if (Array.isArray(p) && p.length >= 2) return [p[0] / width, p[1] / height];
+                if (typeof p === 'object' && p.x !== undefined) return [p.x / width, p.y / height];
+                return null;
+            }).filter(c => c !== null);
+
+            if (coords.length < 3) return;
+
+            features.push({
+                type: 'Feature',
+                properties: {
+                    id: i,
+                    label: label,
+                    score: shape.score,
+                    shape_type: shapeType,
+                },
+                geometry: {
+                    type: 'Polygon',
+                    coordinates: [coords]
+                }
+            });
+        });
+
+        return { type: 'FeatureCollection', features };
+    }
+
+    // Draw annotations on SVG overlay
+    drawAnnotations(annotations, imgWidth, imgHeight) {
+        const svg = document.getElementById('annotation-overlay');
+        svg.innerHTML = '';
+
+        if (!annotations || !annotations.features) return;
+
+        // Get actual displayed image dimensions for proper scaling
+        const img = document.getElementById('annotation-preview-image');
+        const container = document.getElementById('annotation-canvas-container');
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+
+        // Get the actual displayed image size (natural dimensions)
+        const imgDisplayWidth = img.naturalWidth || img.clientWidth;
+        const imgDisplayHeight = img.naturalHeight || img.clientHeight;
+
+        // Calculate image position within container (for centering/letterboxing)
+        const scale = Math.min(containerWidth / imgDisplayWidth, containerHeight / imgDisplayHeight);
+        const scaledWidth = imgDisplayWidth * scale;
+        const scaledHeight = imgDisplayHeight * scale;
+        const offsetX = (containerWidth - scaledWidth) / 2;
+        const offsetY = (containerHeight - scaledHeight) / 2;
+
+        // Create SVG namespace
+        const svgNS = 'http://www.w3.org/2000/svg';
+
+        annotations.features.forEach((feature, i) => {
+            const props = feature.properties;
+            const geom = feature.geometry;
+
+            if (geom.type === 'Polygon') {
+                const coords = geom.coordinates[0];
+
+                // Scale coordinates to actual displayed image position
+                let pathD = coords.map((c, idx) => {
+                    // c[0] and c[1] are normalized (0-1) relative to original image dimensions
+                    // Map to actual displayed position
+                    const x = offsetX + c[0] * scaledWidth;
+                    const y = offsetY + c[1] * scaledHeight;
+                    return (idx === 0 ? `M${x},${y}` : `L${x},${y}`);
+                }).join(' ') + ' Z';
+
+                const path = document.createElementNS(svgNS, 'path');
+                path.setAttribute('d', pathD);
+                path.setAttribute('fill', 'rgba(102, 126, 234, 0.3)');
+                path.setAttribute('stroke', 'rgba(102, 126, 234, 0.8)');
+                path.setAttribute('stroke-width', '2');
+                path.setAttribute('data-index', i);
+                path.style.cursor = 'pointer';
+                path.style.pointerEvents = 'auto';
+                path.addEventListener('click', () => this.selectShape(i));
+
+                svg.appendChild(path);
+
+                // Add label
+                if (coords.length > 0) {
+                    const labelX = offsetX + coords[0][0] * scaledWidth;
+                    const labelY = offsetY + coords[0][1] * scaledHeight - 10;
+
+                    const text = document.createElementNS(svgNS, 'text');
+                    text.setAttribute('x', labelX);
+                    text.setAttribute('y', labelY);
+                    text.setAttribute('fill', 'white');
+                    text.setAttribute('font-size', '12px');
+                    text.setAttribute('font-weight', 'bold');
+                    text.setAttribute('style', 'text-shadow: 1px 1px 2px black; pointer-events: none;');
+                    text.textContent = props.label;
+                    svg.appendChild(text);
+                }
+            } else if (geom.type === 'Point') {
+                const cx = offsetX + geom.coordinates[0] * scaledWidth;
+                const cy = offsetY + geom.coordinates[1] * scaledHeight;
+
+                const circle = document.createElementNS(svgNS, 'circle');
+                circle.setAttribute('cx', cx);
+                circle.setAttribute('cy', cy);
+                circle.setAttribute('r', '6');
+                circle.setAttribute('fill', '#667eea');
+                circle.setAttribute('stroke', 'white');
+                circle.setAttribute('stroke-width', '2');
+                circle.setAttribute('data-index', i);
+                circle.style.cursor = 'pointer';
+                circle.style.pointerEvents = 'auto';
+                circle.addEventListener('click', () => this.selectShape(i));
+
+                svg.appendChild(circle);
+            }
+        });
+    }
+
+    // Render shape list
+    renderShapeList(shapes) {
+        const listEl = document.getElementById('shape-list');
+
+        if (!shapes || shapes.length === 0) {
+            listEl.innerHTML = '<div style="text-align: center; color: #888; padding: 20px;">无标注</div>';
+            return;
+        }
+
+        listEl.innerHTML = shapes.map((shape, i) => `
+            <div class="shape-item" data-index="${i}">
+                <span class="shape-label">${shape.label || 'Unknown'}</span>
+                <span class="shape-score">${shape.score ? shape.score.toFixed(2) : ''}</span>
+                <span class="shape-type">${shape.shape_type || 'rectangle'}</span>
+            </div>
+        `).join('');
+
+        // Add click handlers
+        listEl.querySelectorAll('.shape-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const index = parseInt(item.dataset.index);
+                this.selectShape(index);
+            });
+        });
+    }
+
+    // Select shape
+    selectShape(index) {
+        // Highlight in list
+        document.querySelectorAll('.shape-item').forEach((item, i) => {
+            item.classList.toggle('selected', i === index);
+        });
+
+        // Highlight on SVG (pulse animation could be added)
+        document.querySelectorAll('#annotation-overlay path, #annotation-overlay circle').forEach((el, i) => {
+            if (i === index) {
+                el.setAttribute('stroke-width', '4');
+                el.setAttribute('fill', 'rgba(255, 200, 0, 0.4)');
+            } else {
+                el.setAttribute('stroke-width', '2');
+                el.setAttribute('fill', 'rgba(102, 126, 234, 0.3)');
+            }
+        });
+    }
+
+    // Update annotation summary
+    async updateAnnotationSummary() {
+        if (!this.previewFolder && !this.previewFolderHandle) return;
+
+        // Count labels - only for path-based approach
+        const labelCounts = {};
+        for (const img of this.previewImages) {
+            if (img.path) {
+                try {
+                    const response = await this.api.getPreviewImage(img.path, true);
+                    if (response.shapes) {
+                        for (const shape of response.shapes) {
+                            const label = shape.label || 'Unknown';
+                            labelCounts[label] = (labelCounts[label] || 0) + 1;
+                        }
+                    }
+                } catch (e) {
+                    // Skip errors
+                }
+            }
+        }
+
+        // Render summary
+        const summaryEl = document.getElementById('annotation-summary');
+        const distEl = document.getElementById('label-distribution');
+
+        if (Object.keys(labelCounts).length > 0) {
+            distEl.innerHTML = Object.entries(labelCounts).map(([label, count]) => `
+                <span class="label-tag">${label} <span class="count">${count}</span></span>
+            `).join('');
+            summaryEl.classList.remove('hidden');
+        } else {
+            summaryEl.classList.add('hidden');
+        }
     }
 
     // Handle uploaded files

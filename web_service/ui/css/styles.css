@@ -557,6 +557,231 @@ main {
     padding: 20px;
 }
 
+/* Annotation Preview Mode */
+.preview-mode-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.mode-btn {
+    flex: 1;
+    padding: 10px;
+    border: 2px solid #eee;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.mode-btn:hover {
+    border-color: #667eea;
+}
+
+.mode-btn.active {
+    border-color: #667eea;
+    background: #667eea;
+    color: white;
+}
+
+.preview-canvas-container {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 400px;
+    overflow: hidden;
+}
+
+.preview-canvas-container canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#annotation-preview-content {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1a1a1a;
+}
+
+#annotation-preview-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.preview-canvas-container canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.annotation-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.annotation-overlay svg {
+    width: 100%;
+    height: 100%;
+}
+
+.annotation-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background: #f5f5f5;
+    border-radius: 8px;
+    margin-top: 8px;
+}
+
+.annotation-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.annotation-nav .btn {
+    padding: 6px 12px;
+}
+
+.annotation-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.annotation-info .shape-count {
+    background: #667eea;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+}
+
+.shape-list {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 10px;
+}
+
+.shape-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    background: #f5f5f5;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.shape-item:hover {
+    background: #e8ecff;
+}
+
+.shape-item.selected {
+    background: #667eea;
+    color: white;
+}
+
+.shape-label {
+    font-weight: 500;
+}
+
+.shape-score {
+    font-size: 0.8rem;
+    color: #888;
+}
+
+.shape-item.selected .shape-score {
+    color: rgba(255,255,255,0.8);
+}
+
+.shape-type {
+    font-size: 0.75rem;
+    color: #888;
+    background: #eee;
+    padding: 2px 8px;
+    border-radius: 4px;
+}
+
+.shape-item.selected .shape-type {
+    background: rgba(255,255,255,0.2);
+    color: white;
+}
+
+.annotation-summary {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 10px;
+}
+
+.summary-title {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.label-distribution {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.label-tag {
+    background: #667eea;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+}
+
+.label-tag .count {
+    background: rgba(255,255,255,0.2);
+    padding: 2px 6px;
+    border-radius: 8px;
+    margin-left: 6px;
+}
+
+.folder-select-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.folder-path {
+    flex: 1;
+    padding: 8px 12px;
+    background: #f5f5f5;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: #666;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* Footer */
 footer {
     text-align: center;
