@@ -3,6 +3,8 @@ Process API routes
 """
 import os
 import uuid
+import asyncio
+import threading
 from pathlib import Path
 from typing import Optional
 from fastapi import APIRouter, HTTPException
@@ -56,8 +58,10 @@ def start_processing(request: ProcessRequest):
         "result_path": None
     }
 
-    # Run processing synchronously so we can see errors
-    process_job(job_id)
+    # Run processing in background thread so we can return immediately
+    thread = threading.Thread(target=process_job, args=(job_id,))
+    thread.daemon = True
+    thread.start()
 
     return {
         "job_id": job_id,
