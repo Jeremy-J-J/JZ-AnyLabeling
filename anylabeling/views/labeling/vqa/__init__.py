@@ -1,0 +1,1 @@
+# Stub vqa module

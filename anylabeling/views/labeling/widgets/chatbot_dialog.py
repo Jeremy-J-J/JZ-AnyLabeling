@@ -7,7 +7,10 @@ import shutil
 import threading
 import zipfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from openai import OpenAI
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None
 from PIL import Image
 
 from PyQt6.QtCore import QTimer, Qt, QSize, QPoint, QEvent
@@ -1492,6 +1495,11 @@ class ChatbotDialog(QDialog):
             else:
                 messages.append({"role": "user", "content": self.batch_prompt})
 
+            if OpenAI is None:
+                raise RuntimeError(
+                    "OpenAI package is required for chatbot features. "
+                    "Please install it with: pip install openai"
+                )
             client = OpenAI(
                 base_url=self.current_api_address,
                 api_key=self.current_api_key,
@@ -2134,6 +2142,11 @@ class ChatbotDialog(QDialog):
 
             # Create client and prepare API call parameters
             # Use longer timeout for models that may take more time to respond
+            if OpenAI is None:
+                raise RuntimeError(
+                    "OpenAI package is required for chatbot features. "
+                    "Please install it with: pip install openai"
+                )
             client = OpenAI(base_url=api_address, api_key=api_key, timeout=300)
 
             # Create a secondary thread to periodically check for cancellation

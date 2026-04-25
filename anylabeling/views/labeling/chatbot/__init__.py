@@ -8,3 +8,5 @@ class ChatbotDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Chatbot (Not available in web mode)")
+
+from .style import ChatbotDialogStyle
