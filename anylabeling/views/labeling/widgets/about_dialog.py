@@ -37,7 +37,12 @@ from anylabeling.views.labeling.utils.update_checker import (
 )
 from anylabeling.views.labeling.utils.theme import get_theme
 from anylabeling.views.labeling.widgets.popup import Popup
-from anylabeling.views.labeling.chatbot.render import convert_markdown_to_html
+try:
+    from anylabeling.views.labeling.chatbot.render import convert_markdown_to_html
+except ImportError:
+    def convert_markdown_to_html(markdown_text):
+        """Fallback function when chatbot module is not available"""
+        return markdown_text.replace("\n", "<br>")
 
 
 class AboutDialog(QDialog):

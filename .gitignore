@@ -1,9 +1,10 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
 *.pyc
+*.egg-info/
 
-# Virtual environments
+# Virtual environment
 venv_web/
 .venv/
 
@@ -13,15 +14,15 @@ results/
 output/
 uploads/
 
-# macOS
-.DS_Store
-
 # Model weights (downloaded at runtime)
 *.onnx
 *.pt
 *.weights
 *.engine
 *.mlmodel
+
+# macOS
+.DS_Store
 
 # IDE
 .vscode/
