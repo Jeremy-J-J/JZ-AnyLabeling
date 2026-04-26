@@ -156,7 +156,7 @@ class ModelService:
             # Find the Model class in the module
             model_class = None
             for attr_name in dir(module):
-                if attr_name in ["Model", "YOLOBase", "SAMBase"]:
+                if attr_name in ["Model", "YOLOBase", "SAMBase", "AutoLabelingResult"]:
                     continue
                 attr = getattr(module, attr_name)
                 if isinstance(attr, type) and attr_name[0].isupper():
@@ -203,6 +203,17 @@ class ModelService:
         if conf_threshold is not None:
             model.set_auto_labeling_conf(conf_threshold)
             print(f"Set confidence threshold to: {conf_threshold}")
+
+        # For segmentation models like SAM-HQ, set default marks (full image prompt)
+        if hasattr(model, 'set_auto_labeling_marks'):
+            # Default: use a rectangle covering the whole image as prompt
+            from PIL import Image
+            with Image.open(image_path) as img:
+                width, height = img.size
+            # Use center point with label "all" to detect all objects
+            default_marks = [{"type": "rectangle", "data": [0, 0, width, height]}]
+            model.set_auto_labeling_marks(default_marks)
+            print(f"Set auto labeling marks for segmentation model")
 
         # Handle labeling mode
         labeling_mode = options.get("labeling_mode", "auto") if options else "auto"
