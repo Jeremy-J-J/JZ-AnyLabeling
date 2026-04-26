@@ -152,7 +152,7 @@ def process_job(job_id: str):
                 print(f"Found {len(shapes)} shapes in {file_info['name']}")
 
                 # Export to format
-                print(f"Calling export_to_format with shapes={len(shapes)}, image_path={image_path}, output_format={output_format}")
+                print(f"Calling export_to_format with shapes={len(shapes)}, output_format={output_format}")
                 export_result = label_service.export_to_format(
                     shapes=shapes,
                     image_path=file_info["path"],
