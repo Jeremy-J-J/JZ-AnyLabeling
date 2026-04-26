@@ -156,7 +156,7 @@ class ModelService:
             # Find the Model class in the module
             model_class = None
             for attr_name in dir(module):
-                if attr_name in ["Model", "YOLOBase", "SAMBase", "AutoLabelingResult"]:
+                if attr_name in ["Model", "YOLOBase", "SAMBase", "AutoLabelingResult", "ChineseClipONNX"]:
                     continue
                 attr = getattr(module, attr_name)
                 if isinstance(attr, type) and attr_name[0].isupper():
