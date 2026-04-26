@@ -12,8 +12,13 @@ const CURATED_MODEL_PREFIXES = {
         { prefix: 'yolov8x', name: 'YOLOv8x (最大)' }
     ],
     segmentation: [
-        { prefix: 'sam_hq_vit_l', name: 'SAM-HQ Vit-L' },
-        { prefix: 'yolov8m_seg', name: 'YOLOv8m-Seg' }
+        { prefix: 'sam_hq_vit_l', name: 'SAM-HQ Vit-L (推荐)' },
+        { prefix: 'sam_hq_vit_b', name: 'SAM-HQ Vit-B' },
+        { prefix: 'sam2_hiera_large', name: 'SAM2 Large' },
+        { prefix: 'sam2_hiera_base', name: 'SAM2 Base' },
+        { prefix: 'yolov8x_seg', name: 'YOLOv8x-Seg' },
+        { prefix: 'yolov8m_seg', name: 'YOLOv8m-Seg' },
+        { prefix: 'yolov8s_seg', name: 'YOLOv8s-Seg' }
     ],
     pose: [
         { prefix: 'yolov8s_pose', name: 'YOLOv8s-Pose' },
