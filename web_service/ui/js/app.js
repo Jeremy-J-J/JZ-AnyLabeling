@@ -51,6 +51,7 @@ class App {
         this.pollingInterval = null;
         this.currentPreviewIndex = -1;
         this.customSavePath = null;
+        this.lastResultPath = null;
 
         // Annotation preview mode
         this.previewMode = 'labeling'; // 'labeling' or 'preview'
@@ -415,11 +416,11 @@ class App {
         document.getElementById('labeling-panel').classList.toggle('hidden', mode !== 'labeling');
         document.getElementById('annotation-preview-panel').classList.toggle('hidden', mode !== 'preview');
 
-        // When entering preview mode, auto-load from default path
-        if (mode === 'preview' && this.defaultResultPath) {
-            // Check if we have images loaded, if not auto-load from default
-            if (this.previewImages.length === 0) {
-                this.loadAnnotationFolderFromPath(this.defaultResultPath);
+        // When entering preview mode, auto-load from last result path (or default)
+        if (mode === 'preview') {
+            const folderToLoad = this.lastResultPath || this.defaultResultPath;
+            if (folderToLoad && this.previewImages.length === 0) {
+                this.loadAnnotationFolderFromPath(folderToLoad);
             }
         }
     }
@@ -1019,6 +1020,8 @@ class App {
     async pollJobStatus() {
         if (!this.currentJobId) return;
 
+        this.lastResultPath = null;
+
         this.pollingInterval = setInterval(async () => {
             try {
                 const status = await this.api.getJobStatus(this.currentJobId);
@@ -1026,6 +1029,7 @@ class App {
 
                 if (status.status === 'completed') {
                     clearInterval(this.pollingInterval);
+                    this.lastResultPath = status.result_path;
                     this.showResult();
                 } else if (status.status === 'failed') {
                     clearInterval(this.pollingInterval);
@@ -1052,11 +1056,12 @@ class App {
         const message = document.getElementById('result-message');
         const path = document.getElementById('result-path');
 
-        if (this.customSavePath) {
-            message.textContent = '标注已完成！';
+        message.textContent = '标注已完成！';
+        if (this.lastResultPath) {
+            path.textContent = `结果已保存到: ${this.lastResultPath}`;
+        } else if (this.customSavePath) {
             path.textContent = `结果已保存到: ${this.customSavePath}`;
         } else {
-            message.textContent = '标注已完成！';
             path.textContent = '结果已保存到 results 目录';
         }
     }
@@ -1078,6 +1083,7 @@ class App {
         this.currentJobId = null;
         this.currentPreviewIndex = -1;
         this.customSavePath = null;
+        this.lastResultPath = null;
 
         if (this.pollingInterval) {
             clearInterval(this.pollingInterval);

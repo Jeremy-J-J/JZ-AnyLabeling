@@ -40,3 +40,4 @@ class JobStatusResponse(BaseModel):
     current_file: Optional[str] = None
     total_files: Optional[int] = None
     error: Optional[str] = None
+    result_path: Optional[str] = None

@@ -195,7 +195,8 @@ async def get_job_status(job_id: str):
         progress=job["progress"],
         current_file=job["current_file"],
         total_files=job["total_files"],
-        error=job["error"]
+        error=job["error"],
+        result_path=job.get("result_path")
     )
 
 
