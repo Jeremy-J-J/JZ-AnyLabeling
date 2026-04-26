@@ -155,14 +155,20 @@ class ModelService:
 
             # Find the Model class in the module
             model_class = None
+            from anylabeling.services.auto_labeling.model import Model as BaseModel
             for attr_name in dir(module):
-                if attr_name in ["Model", "YOLOBase", "SAMBase", "AutoLabelingResult", "ChineseClipONNX"]:
+                if attr_name in ["Model", "YOLOBase", "SAMBase", "AutoLabelingResult", "ChineseClipONNX", "GenericWorker"]:
                     continue
                 attr = getattr(module, attr_name)
                 if isinstance(attr, type) and attr_name[0].isupper():
-                    model_class = attr
-                    print(f"Found model class: {attr_name}")
-                    break
+                    # Check if this class is a subclass of Model
+                    try:
+                        if issubclass(attr, BaseModel):
+                            model_class = attr
+                            print(f"Found model class: {attr_name}")
+                            break
+                    except TypeError:
+                        continue
 
             if model_class is None:
                 raise ValueError(f"No model class found in {module_name}")
