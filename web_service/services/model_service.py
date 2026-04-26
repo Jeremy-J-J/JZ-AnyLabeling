@@ -248,7 +248,11 @@ class ModelService:
         img_array = np.array(img)
 
         # Run inference
-        result = model.predict_shapes(img_array, image_path=image_path)
+        try:
+            result = model.predict_shapes(img_array, filename=image_path)
+        except TypeError:
+            # Some models don't accept filename parameter
+            result = model.predict_shapes(img_array)
         return result
 
 
