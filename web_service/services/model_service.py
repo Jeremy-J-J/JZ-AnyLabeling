@@ -247,11 +247,26 @@ class ModelService:
         img = Image.open(image_path)
         img_array = np.array(img)
 
-        # Run inference
-        try:
-            result = model.predict_shapes(img_array, filename=image_path)
-        except TypeError:
-            # Some models don't accept filename parameter
+        # Run inference - try different parameter signatures
+        result = None
+        for call_style in [
+            {"img": img_array, "filename": image_path},
+            {"img": img_array, "image_path": image_path},
+            {"img": img_array},
+            (img_array,),
+            (img_array, image_path),
+        ]:
+            try:
+                if isinstance(call_style, dict):
+                    result = model.predict_shapes(**call_style)
+                else:
+                    result = model.predict_shapes(*call_style)
+                break
+            except TypeError as e:
+                if "unexpected keyword argument" in str(e):
+                    continue
+                raise
+        if result is None:
             result = model.predict_shapes(img_array)
         return result
 
