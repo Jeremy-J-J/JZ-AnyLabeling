@@ -239,6 +239,11 @@ class ModelService:
                 model.set_auto_labeling_filter_classes(None)
                 if hasattr(model, 'filter_classes'):
                     print(f"Filter classes indices: {model.filter_classes}")
+        elif hasattr(model, 'classes') and specific_classes and labeling_mode == "configured":
+            # For models like SAM2 that have classes but no filter method
+            # Set the model's classes to the specific classes for CLIP classification
+            print(f"Configured mode: setting SAM2 classes to {specific_classes}")
+            model.classes = specific_classes
 
         # Load image
         from PIL import Image
