@@ -207,7 +207,7 @@ class ModelService:
 
         # Handle confidence threshold
         conf_threshold = options.get("conf_threshold") if options else None
-        if conf_threshold is not None:
+        if conf_threshold is not None and hasattr(model, 'set_auto_labeling_conf'):
             model.set_auto_labeling_conf(conf_threshold)
             print(f"Set confidence threshold to: {conf_threshold}")
 
