@@ -226,16 +226,19 @@ class ModelService:
         labeling_mode = options.get("labeling_mode", "auto") if options else "auto"
         specific_classes = options.get("specific_classes") if options else None
 
-        if labeling_mode == "configured" and specific_classes:
-            # Configured Class Mode: filter to only specified classes
-            print(f"Configured mode: only annotating classes {specific_classes}")
-            model.set_auto_labeling_filter_classes(specific_classes)
-            print(f"Filter classes indices: {model.filter_classes}")
-        else:
-            # Auto Recognition Mode: no filtering (annotate all detected classes)
-            print(f"Auto mode: annotating all detected classes")
-            model.set_auto_labeling_filter_classes(None)
-            print(f"Filter classes indices: {model.filter_classes}")
+        if hasattr(model, 'set_auto_labeling_filter_classes'):
+            if labeling_mode == "configured" and specific_classes:
+                # Configured Class Mode: filter to only specified classes
+                print(f"Configured mode: only annotating classes {specific_classes}")
+                model.set_auto_labeling_filter_classes(specific_classes)
+                if hasattr(model, 'filter_classes'):
+                    print(f"Filter classes indices: {model.filter_classes}")
+            else:
+                # Auto Recognition Mode: no filtering (annotate all detected classes)
+                print(f"Auto mode: annotating all detected classes")
+                model.set_auto_labeling_filter_classes(None)
+                if hasattr(model, 'filter_classes'):
+                    print(f"Filter classes indices: {model.filter_classes}")
 
         # Load image
         from PIL import Image
