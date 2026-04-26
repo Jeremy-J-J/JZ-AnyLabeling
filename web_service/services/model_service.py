@@ -247,29 +247,25 @@ class ModelService:
         img = Image.open(image_path)
         img_array = np.array(img)
 
-        # Run inference - try different parameter signatures
-        # Only use keyword args to avoid positional arg confusion
+        # Run inference
         result = None
+        # Try different parameter styles, most common first
         call_methods = [
-            lambda: model.predict_shapes(img=img_array, filename=image_path),
-            lambda: model.predict_shapes(img=img_array, image_path=image_path),
-            lambda: model.predict_shapes(img=img_array),
-            lambda: model.predict_shapes(image=img_array, filename=image_path),
-            lambda: model.predict_shapes(image=img_array),
+            lambda: model.predict_shapes(img_array, image_path=image_path),
+            lambda: model.predict_shapes(img_array, filename=image_path),
+            lambda: model.predict_shapes(img_array, filename=None),
             lambda: model.predict_shapes(img_array),
-            lambda: model.predict_shapes(img_array, image_path),
         ]
+        last_error = None
         for call_fn in call_methods:
             try:
                 result = call_fn()
                 break
-            except TypeError as e:
+            except Exception as e:
+                last_error = e
                 if "unexpected keyword argument" in str(e):
                     continue
-                raise
-            except AttributeError as e:
-                if "'numpy.ndarray' object has no attribute" in str(e):
-                    continue
+                # For other errors, don't retry - let it propagate
                 raise
         if result is None:
             from anylabeling.services.auto_labeling.types import AutoLabelingResult
