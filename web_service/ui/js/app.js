@@ -9,7 +9,11 @@ const CURATED_MODEL_PREFIXES = {
         { prefix: 'yolov8s', name: 'YOLOv8s (小)' },
         { prefix: 'yolov8m', name: 'YOLOv8m (中)' },
         { prefix: 'yolov8l', name: 'YOLOv8l (大)' },
-        { prefix: 'yolov8x', name: 'YOLOv8x (最大)' }
+        { prefix: 'yolov8x', name: 'YOLOv8x (最大)' },
+        { prefix: 'dfine_x', name: 'DFINE-X (超大)' },
+        { prefix: 'rtdetrv2x', name: 'RT-DETRv2-X (超大)' },
+        { prefix: 'gold_yolo_l', name: 'Gold-YOLO-L (大)' },
+        { prefix: 'damoyolo_l', name: 'DAMO-YOLO-L (大)' }
     ],
     segmentation: [
         { prefix: 'sam_hq_vit_l', name: 'SAM-HQ Vit-L (推荐)' },
