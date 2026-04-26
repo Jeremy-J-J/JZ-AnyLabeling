@@ -285,11 +285,14 @@ class ModelService:
             for shape in result.shapes:
                 cache_label = getattr(shape, 'cache_label', '') or ''
                 if cache_label:
-                    # CLIP classification available, use it
-                    shape.label = cache_label
-                else:
-                    # No CLIP, use first configured class for all shapes
-                    shape.label = specific_classes[0]
+                    # CLIP classification available, use it only if it matches configured classes
+                    specific_classes_lower = [c.lower() for c in specific_classes]
+                    if cache_label.lower() in specific_classes_lower:
+                        shape.label = cache_label
+                    else:
+                        # CLIP result doesn't match configured classes, mark as AUTOLABEL_OBJECT
+                        shape.label = "AUTOLABEL_OBJECT"
+                # If no cache_label (no CLIP), leave original label - don't assign arbitrary class
             print(f"Processed {len(result.shapes)} shapes")
 
         return result
