@@ -55,6 +55,14 @@
                     <div class="model-grid" id="model-grid">
                         <div class="loading">加载中...</div>
                     </div>
+                    <div class="confidence-setting" id="confidence-setting">
+                        <label>
+                            <span>置信度阈值:</span>
+                            <input type="range" id="confidence-slider" min="0" max="100" value="10">
+                            <span id="confidence-value">0.10</span>
+                        </label>
+                        <span class="setting-hint">值越低检测越多，值越高检测越少</span>
+                    </div>
                 </section>
 
                 <!-- Format Selection -->

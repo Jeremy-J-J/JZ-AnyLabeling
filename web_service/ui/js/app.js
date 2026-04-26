@@ -2,11 +2,14 @@
  * X-AnyLabeling Web Service - Main Application
  */
 
-// Curated model prefixes per task (2 best models each)
+// Curated model prefixes per task (best models each)
 const CURATED_MODEL_PREFIXES = {
     detection: [
-        { prefix: 'yolov8n', name: 'YOLOv8n' },
-        { prefix: 'yolov8s', name: 'YOLOv8s' }
+        { prefix: 'yolov8n', name: 'YOLOv8n (最小)' },
+        { prefix: 'yolov8s', name: 'YOLOv8s (小)' },
+        { prefix: 'yolov8m', name: 'YOLOv8m (中)' },
+        { prefix: 'yolov8l', name: 'YOLOv8l (大)' },
+        { prefix: 'yolov8x', name: 'YOLOv8x (最大)' }
     ],
     segmentation: [
         { prefix: 'sam_hq_vit_l', name: 'SAM-HQ Vit-L' },
@@ -298,6 +301,14 @@ class App {
                 }
             });
         }
+
+        // Confidence slider
+        const confidenceSlider = document.getElementById('confidence-slider');
+        const confidenceValue = document.getElementById('confidence-value');
+        confidenceSlider.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value);
+            confidenceValue.textContent = (val / 100).toFixed(2);
+        });
 
         // Model filters
         document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -971,7 +982,11 @@ class App {
             }
 
             // Build options
-            const options = { frame_interval: frameInterval };
+            const confidenceThreshold = parseInt(document.getElementById('confidence-slider').value) / 100;
+            const options = {
+                frame_interval: frameInterval,
+                conf_threshold: confidenceThreshold
+            };
             if (this.customSavePath) {
                 options.save_path = this.customSavePath;
             }

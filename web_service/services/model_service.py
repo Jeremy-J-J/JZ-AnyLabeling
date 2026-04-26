@@ -198,6 +198,12 @@ class ModelService:
         """Run prediction on an image"""
         model = self.load_model(model_id, options)
 
+        # Handle confidence threshold
+        conf_threshold = options.get("conf_threshold") if options else None
+        if conf_threshold is not None:
+            model.set_auto_labeling_conf(conf_threshold)
+            print(f"Set confidence threshold to: {conf_threshold}")
+
         # Handle labeling mode
         labeling_mode = options.get("labeling_mode", "auto") if options else "auto"
         specific_classes = options.get("specific_classes") if options else None
