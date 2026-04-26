@@ -248,26 +248,32 @@ class ModelService:
         img_array = np.array(img)
 
         # Run inference - try different parameter signatures
+        # Only use keyword args to avoid positional arg confusion
         result = None
-        for call_style in [
-            {"img": img_array, "filename": image_path},
-            {"img": img_array, "image_path": image_path},
-            {"img": img_array},
-            (img_array,),
-            (img_array, image_path),
-        ]:
+        call_methods = [
+            lambda: model.predict_shapes(img=img_array, filename=image_path),
+            lambda: model.predict_shapes(img=img_array, image_path=image_path),
+            lambda: model.predict_shapes(img=img_array),
+            lambda: model.predict_shapes(image=img_array, filename=image_path),
+            lambda: model.predict_shapes(image=img_array),
+            lambda: model.predict_shapes(img_array),
+            lambda: model.predict_shapes(img_array, image_path),
+        ]
+        for call_fn in call_methods:
             try:
-                if isinstance(call_style, dict):
-                    result = model.predict_shapes(**call_style)
-                else:
-                    result = model.predict_shapes(*call_style)
+                result = call_fn()
                 break
             except TypeError as e:
                 if "unexpected keyword argument" in str(e):
                     continue
                 raise
+            except AttributeError as e:
+                if "'numpy.ndarray' object has no attribute" in str(e):
+                    continue
+                raise
         if result is None:
-            result = model.predict_shapes(img_array)
+            from anylabeling.services.auto_labeling.types import AutoLabelingResult
+            result = AutoLabelingResult([], replace=False)
         return result
 
 
