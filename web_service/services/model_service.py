@@ -180,7 +180,8 @@ class ModelService:
             print(f"Creating model instance with config: {config.get('name')}")
             model = model_class(config, on_message)
             print(f"Model instance created: {model}")
-            print(f"Model classes: {model.classes}")
+            if hasattr(model, 'classes'):
+                print(f"Model classes: {model.classes}")
             self.loaded_models[model_id] = model
             return model
 
