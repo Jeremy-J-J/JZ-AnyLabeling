@@ -281,17 +281,16 @@ class ModelService:
         if (specific_classes and labeling_mode == "configured" and
             hasattr(model, 'set_auto_labeling_filter_classes') is False and
             hasattr(result, 'shapes')):
-            print(f"Filtering {len(result.shapes)} shapes to classes {specific_classes}")
-            specific_classes_lower = [c.lower() for c in specific_classes]
-            filtered_shapes = []
+            print(f"Processing {len(result.shapes)} shapes with configured classes {specific_classes}")
             for shape in result.shapes:
-                # Check cache_label first (for SAM2 CLIP classification), then label
-                label = getattr(shape, 'cache_label', '') or getattr(shape, 'label', '') or ''
-                # Only keep shapes that are classified as the specific classes
-                if label.lower() in specific_classes_lower:
-                    filtered_shapes.append(shape)
-            print(f"Filtered to {len(filtered_shapes)} shapes")
-            result.shapes = filtered_shapes
+                cache_label = getattr(shape, 'cache_label', '') or ''
+                if cache_label:
+                    # CLIP classification available, use it
+                    shape.label = cache_label
+                else:
+                    # No CLIP, use first configured class for all shapes
+                    shape.label = specific_classes[0]
+            print(f"Processed {len(result.shapes)} shapes")
 
         return result
 
